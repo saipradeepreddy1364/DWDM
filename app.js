@@ -23,7 +23,14 @@ let featureImportanceChartInstance = null;
 document.addEventListener("DOMContentLoaded", () => {
   initSliders();
   initSearchAndFilters();
-  initAddForm();
+  initDSSCalculator();
+  
+  // Pre-load the first applicant into the form
+  if (applicants.length > 0) {
+    selectedId = applicants[0].id;
+    loadApplicantIntoForm(applicants[0]);
+  }
+  
   renderDashboard(true); // pass true to init charts
 });
 
@@ -62,7 +69,7 @@ function initSliders() {
         
         policy[id] = value;
         valueDisplay.textContent = id.includes("DTI") || id.includes("LTV") ? `${value}%` : value;
-        renderDashboard(false); // update charts without recreating structures
+        renderDashboard(false); // update charts and live status instantly
       });
     }
   });
@@ -70,16 +77,22 @@ function initSliders() {
 
 // Evaluate individual applicant using current policy thresholds
 function evaluateApplicant(app) {
-  const dti = parseFloat(((app.existingDebts / app.monthlyIncome) * 100).toFixed(1));
-  const ltv = parseFloat(((app.loanAmount / app.propertyValue) * 100).toFixed(1));
+  const income = parseFloat(app.monthlyIncome) || 0;
+  const debts = parseFloat(app.existingDebts) || 0;
+  const loan = parseFloat(app.loanAmount) || 0;
+  const property = parseFloat(app.propertyValue) || 0;
+  const score = parseInt(app.creditScore) || 300;
+
+  const dti = income > 0 ? parseFloat(((debts / income) * 100).toFixed(1)) : 0;
+  const ltv = property > 0 ? parseFloat(((loan / property) * 100).toFixed(1)) : 0;
   
   const dtiPass = dti <= policy.maxDTI;
   const ltvPass = ltv <= policy.maxLTV;
   
   let creditStatus = "neutral";
-  if (app.creditScore >= policy.minAutoApprove) {
+  if (score >= policy.minAutoApprove) {
     creditStatus = "pass";
-  } else if (app.creditScore >= policy.minManualReview) {
+  } else if (score >= policy.minManualReview) {
     creditStatus = "warning";
   } else {
     creditStatus = "fail";
@@ -90,7 +103,7 @@ function evaluateApplicant(app) {
 
   if (creditStatus === "fail") {
     status = "Deny";
-    reason = `Credit Score of ${app.creditScore} is below the policy minimum of ${policy.minManualReview}.`;
+    reason = `Credit Score of ${score} is below the policy minimum of ${policy.minManualReview}.`;
   } else if (!dtiPass && !ltvPass) {
     status = "Deny";
     reason = `Critical risk: Both Debt-to-Income (${dti}%) and Loan-to-Value (${ltv}%) ratios exceed max thresholds.`;
@@ -102,7 +115,7 @@ function evaluateApplicant(app) {
     const triggers = [];
     if (!dtiPass) triggers.push(`DTI (${dti}%) exceeds max ${policy.maxDTI}%`);
     if (!ltvPass) triggers.push(`LTV (${ltv}%) exceeds max ${policy.maxLTV}%`);
-    if (creditStatus === "warning") triggers.push(`Credit Score (${app.creditScore}) is in review range (${policy.minManualReview}-${policy.minAutoApprove})`);
+    if (creditStatus === "warning") triggers.push(`Credit Score (${score}) is in review range (${policy.minManualReview}-${policy.minAutoApprove})`);
     reason = `Triggered for manual review due to: ${triggers.join("; ")}.`;
   }
   
@@ -139,49 +152,177 @@ function initSearchAndFilters() {
   });
 }
 
-// Handle Add Applicant Modal
-function initAddForm() {
-  const addBtn = document.getElementById("add-applicant-btn");
-  const modal = document.getElementById("add-modal");
-  const closeModal = document.getElementById("close-modal");
-  const cancelModal = document.getElementById("cancel-modal");
-  const form = document.getElementById("add-applicant-form");
+// Get applicant form data from inputs
+function getFormData() {
+  return {
+    name: document.getElementById("calc-name").value,
+    monthlyIncome: parseFloat(document.getElementById("calc-income").value) || 0,
+    existingDebts: parseFloat(document.getElementById("calc-debts").value) || 0,
+    loanAmount: parseFloat(document.getElementById("calc-loan").value) || 0,
+    propertyValue: parseFloat(document.getElementById("calc-property").value) || 0,
+    creditScore: parseInt(document.getElementById("calc-credit").value) || 300,
+    selfEmployed: document.getElementById("calc-employed").value,
+    education: document.getElementById("calc-education").value,
+    gender: document.getElementById("calc-gender").value
+  };
+}
+
+// Populate input form with applicant values
+function loadApplicantIntoForm(app) {
+  if (!app) return;
+  document.getElementById("calc-name").value = app.name || "";
+  document.getElementById("calc-income").value = app.monthlyIncome || "";
+  document.getElementById("calc-debts").value = app.existingDebts || "";
+  document.getElementById("calc-loan").value = app.loanAmount || "";
+  document.getElementById("calc-property").value = app.propertyValue || "";
+  document.getElementById("calc-credit").value = app.creditScore || "650";
+  document.getElementById("calc-employed").value = app.selfEmployed || "No";
+  document.getElementById("calc-education").value = app.education || "Graduate";
+  document.getElementById("calc-gender").value = app.gender || "Male";
+}
+
+// Update Live Underwriting Decision Card
+function updateLiveDecisionCard() {
+  const currentApp = getFormData();
+  const evaluation = evaluateApplicant(currentApp);
   
-  if (addBtn && modal) {
-    addBtn.addEventListener("click", () => modal.classList.add("open"));
+  // Update calculated outputs
+  document.getElementById("live-dti").textContent = `${evaluation.dti}%`;
+  document.getElementById("live-ltv").textContent = `${evaluation.ltv}%`;
+  
+  // Update status badge
+  const recBadge = document.getElementById("live-status-recommendation");
+  if (recBadge) {
+    recBadge.textContent = evaluation.status.toUpperCase();
+    recBadge.className = "live-status-badge";
+    if (evaluation.status === "Approve") {
+      recBadge.classList.add("status-approve");
+    } else if (evaluation.status === "Manual Review") {
+      recBadge.classList.add("status-review");
+    } else {
+      recBadge.classList.add("status-deny");
+    }
   }
   
-  const closeActions = [closeModal, cancelModal];
-  closeActions.forEach(btn => {
-    if (btn) {
-      btn.addEventListener("click", () => modal.classList.remove("open"));
+  // Update narrative explanation
+  const reasonText = document.getElementById("live-decision-reason");
+  if (reasonText) {
+    reasonText.textContent = evaluation.reason;
+  }
+  
+  // Update checklist icons and classes
+  const chkDti = document.getElementById("chk-dti");
+  const chkLtv = document.getElementById("chk-ltv");
+  const chkCredit = document.getElementById("chk-credit");
+  
+  if (chkDti) {
+    if (evaluation.dtiPass) {
+      chkDti.className = "live-check-item pass";
+      chkDti.querySelector(".chk-icon").textContent = "✓";
+    } else {
+      chkDti.className = "live-check-item fail";
+      chkDti.querySelector(".chk-icon").textContent = "✗";
+    }
+  }
+  
+  if (chkLtv) {
+    if (evaluation.ltvPass) {
+      chkLtv.className = "live-check-item pass";
+      chkLtv.querySelector(".chk-icon").textContent = "✓";
+    } else {
+      chkLtv.className = "live-check-item fail";
+      chkLtv.querySelector(".chk-icon").textContent = "✗";
+    }
+  }
+  
+  if (chkCredit) {
+    if (evaluation.creditStatus === "pass") {
+      chkCredit.className = "live-check-item pass";
+      chkCredit.querySelector(".chk-icon").textContent = "✓";
+    } else if (evaluation.creditStatus === "warning") {
+      chkCredit.className = "live-check-item warning";
+      chkCredit.querySelector(".chk-icon").textContent = "!";
+    } else {
+      chkCredit.className = "live-check-item fail";
+      chkCredit.querySelector(".chk-icon").textContent = "✗";
+    }
+  }
+}
+
+// Setup live calculations and control actions for the DSS calculator
+function initDSSCalculator() {
+  const formFields = [
+    "calc-name", "calc-income", "calc-debts", 
+    "calc-loan", "calc-property", "calc-credit",
+    "calc-employed", "calc-education", "calc-gender"
+  ];
+  
+  formFields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("input", updateLiveDecisionCard);
+      el.addEventListener("change", updateLiveDecisionCard);
     }
   });
   
-  if (form) {
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
+  // Save / Update button click
+  const saveBtn = document.getElementById("save-applicant-btn");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
+      const name = document.getElementById("calc-name").value.trim();
+      if (!name) {
+        alert("Please enter a valid applicant name.");
+        return;
+      }
       
-      const newApp = {
-        id: `APP-0${applicants.length + 1}`,
-        name: document.getElementById("form-name").value,
-        monthlyIncome: parseFloat(document.getElementById("form-income").value),
-        existingDebts: parseFloat(document.getElementById("form-debts").value),
-        loanAmount: parseFloat(document.getElementById("form-loan").value),
-        propertyValue: parseFloat(document.getElementById("form-property").value),
-        creditScore: parseInt(document.getElementById("form-credit").value),
-        gender: document.getElementById("form-gender").value,
-        education: document.getElementById("form-education").value,
-        selfEmployed: document.getElementById("form-employed").value
-      };
+      const currentData = getFormData();
       
-      applicants.unshift(newApp);
-      selectedId = newApp.id; // automatically select the newly added applicant
-      
-      modal.classList.remove("open");
-      form.reset();
+      if (selectedId) {
+        // Update existing applicant
+        const index = applicants.findIndex(a => a.id === selectedId);
+        if (index !== -1) {
+          applicants[index] = {
+            ...applicants[index],
+            ...currentData,
+            id: selectedId
+          };
+        }
+      } else {
+        // Create brand new applicant
+        const nextNum = applicants.length + 1;
+        const newId = `APP-${nextNum < 10 ? '00' : nextNum < 100 ? '0' : ''}${nextNum}`;
+        const newApp = {
+          ...currentData,
+          id: newId
+        };
+        applicants.unshift(newApp);
+        selectedId = newId;
+      }
       
       renderDashboard(false);
+    });
+  }
+  
+  // Clear / New button click
+  const clearBtn = document.getElementById("clear-applicant-btn");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      selectedId = null;
+      document.getElementById("calc-name").value = "";
+      document.getElementById("calc-income").value = "";
+      document.getElementById("calc-debts").value = "";
+      document.getElementById("calc-loan").value = "";
+      document.getElementById("calc-property").value = "";
+      document.getElementById("calc-credit").value = "650";
+      document.getElementById("calc-employed").value = "No";
+      document.getElementById("calc-education").value = "Graduate";
+      document.getElementById("calc-gender").value = "Male";
+      
+      // Remove selected formatting in queue table
+      const rows = document.querySelectorAll(".table-row");
+      rows.forEach(row => row.classList.remove("selected"));
+      
+      updateLiveDecisionCard();
     });
   }
 }
@@ -207,8 +348,8 @@ function renderDashboard(initCharts = false) {
   // 4. Render Table
   renderTable(filteredList);
   
-  // 5. Render Detail Card
-  renderDetailCard(evaluatedList);
+  // 5. Update Live decision panel
+  updateLiveDecisionCard();
   
   // 6. Update Charts
   updateCharts(evaluatedList, initCharts);
@@ -279,159 +420,24 @@ function renderTable(list) {
 // Handle row selection
 window.selectApplicant = function(id) {
   selectedId = id;
+  const app = applicants.find(a => a.id === id);
+  if (app) {
+    loadApplicantIntoForm(app);
+  }
   
   // Update class of selected row
   const rows = document.querySelectorAll(".table-row");
   rows.forEach(row => {
-    row.classList.remove("selected");
+    if (row.querySelector("td").textContent === id) {
+      row.classList.add("selected");
+    } else {
+      row.classList.remove("selected");
+    }
   });
   
   // Refresh detail view
   renderDashboard(false);
 };
-
-// Render applicant report and checklists
-function renderDetailCard(evaluatedList) {
-  const app = evaluatedList.find(a => a.id === selectedId);
-  const detailContainer = document.getElementById("detail-card-container");
-  
-  if (!detailContainer) return;
-  if (!app) {
-    detailContainer.innerHTML = `<p class="table-empty">Select an applicant to view detailed credit risk analysis.</p>`;
-    return;
-  }
-  
-  const statusClass = app.status === "Approve" ? "approve" : app.status === "Manual Review" ? "review" : "deny";
-  
-  const dtiBarClass = app.dtiPass ? "pass" : (app.dti <= policy.maxDTI + 10 ? "warning" : "fail");
-  const ltvBarClass = app.ltvPass ? "pass" : (app.ltv <= policy.maxLTV + 10 ? "warning" : "fail");
-  const scoreBarClass = app.creditStatus === "pass" ? "pass" : (app.creditStatus === "warning" ? "warning" : "fail");
-  
-  const scoreProgressPct = Math.min(100, Math.max(0, ((app.creditScore - 300) / 550) * 100));
-  
-  detailContainer.innerHTML = `
-    <div class="detail-card" style="grid-column: span 2; border-top: 4px solid var(--color-${statusClass});">
-      <h3>
-        <span>Risk Assessment Report &mdash; <strong>${app.name}</strong></span>
-        <span class="status-badge ${statusClass}">${app.status}</span>
-      </h3>
-      
-      <div class="detail-layout">
-        <!-- Profile Column -->
-        <div style="display:flex; flex-direction:column; gap:1.25rem;">
-          <div class="detail-grid">
-            <div class="detail-item">
-              <span>Applicant Name</span>
-              <span>${app.name}</span>
-            </div>
-            <div class="detail-item mono-val">
-              <span>Applicant ID</span>
-              <span>${app.id}</span>
-            </div>
-            <div class="detail-item mono-val">
-              <span>Monthly Income</span>
-              <span>$${app.monthlyIncome.toLocaleString()}</span>
-            </div>
-            <div class="detail-item mono-val">
-              <span>Existing Debts</span>
-              <span>$${app.existingDebts.toLocaleString()}</span>
-            </div>
-            <div class="detail-item mono-val">
-              <span>Requested Loan</span>
-              <span>$${app.loanAmount.toLocaleString()}</span>
-            </div>
-            <div class="detail-item mono-val">
-              <span>Collateral Value</span>
-              <span>$${app.propertyValue.toLocaleString()}</span>
-            </div>
-            <div class="detail-item">
-              <span>Education</span>
-              <span>${app.education}</span>
-            </div>
-            <div class="detail-item">
-              <span>Self Employed</span>
-              <span>${app.selfEmployed}</span>
-            </div>
-          </div>
-          
-          <div style="margin-top:0.5rem; padding: 1rem; border-radius:var(--radius-md); background: rgba(255,255,255,0.03); border:1px solid var(--border-light);">
-            <span style="font-size:0.75rem; font-weight:600; text-transform:uppercase; color:var(--text-secondary); display:block; margin-bottom:0.35rem;">Decision Narrative</span>
-            <p style="font-size:0.875rem; line-height:1.5; color:var(--text-primary); font-style:italic;">"${app.reason}"</p>
-          </div>
-        </div>
-        
-        <!-- Risk Parameters Ratios Column -->
-        <div class="ratio-progress-container">
-          <h4 style="font-family:'Space Grotesk', sans-serif; font-size:0.95rem; font-weight:600; color:#fff; border-bottom:1px dashed var(--border-light); padding-bottom:0.25rem;">Key Financial Ratios & Credit Profile</h4>
-          
-          <!-- Debt-to-Income Progress -->
-          <div class="progress-bar-group">
-            <div class="progress-labels">
-              <span>Debt-to-Income (DTI)</span>
-              <span>${app.dti}% <span style="color:var(--text-secondary); font-size:0.75rem;">(Max: ${policy.maxDTI}%)</span></span>
-            </div>
-            <div class="progress-track">
-              <div class="progress-fill ${dtiBarClass}" style="width: ${Math.min(100, app.dti)}%"></div>
-              <div class="threshold-marker" style="left: ${policy.maxDTI}%"></div>
-            </div>
-          </div>
-          
-          <!-- Loan-to-Value Progress -->
-          <div class="progress-bar-group">
-            <div class="progress-labels">
-              <span>Loan-to-Value (LTV)</span>
-              <span>${app.ltv}% <span style="color:var(--text-secondary); font-size:0.75rem;">(Max: ${policy.maxLTV}%)</span></span>
-            </div>
-            <div class="progress-track">
-              <div class="progress-fill ${ltvBarClass}" style="width: ${Math.min(100, app.ltv)}%"></div>
-              <div class="threshold-marker" style="left: ${policy.maxLTV}%"></div>
-            </div>
-          </div>
-          
-          <!-- Credit Score Progress -->
-          <div class="progress-bar-group">
-            <div class="progress-labels">
-              <span>Credit Score (CIBIL / FICO)</span>
-              <span>${app.creditScore} <span style="color:var(--text-secondary); font-size:0.75rem;">(Ranges: ${policy.minManualReview}-${policy.minAutoApprove})</span></span>
-            </div>
-            <div class="progress-track">
-              <div class="progress-fill ${scoreBarClass}" style="width: ${scoreProgressPct}%"></div>
-              <div class="threshold-marker" style="left: ${((policy.minManualReview - 300) / 550) * 100}%"></div>
-              <div class="threshold-marker" style="left: ${((policy.minAutoApprove - 300) / 550) * 100}%"></div>
-            </div>
-          </div>
-          
-          <!-- Decision Rules Checklist -->
-          <div class="decision-checklist">
-            <div class="check-item ${app.dtiPass ? 'pass' : 'fail'}">
-              <div class="check-icon">${app.dtiPass ? '✓' : '✗'}</div>
-              <div class="check-details">
-                <span>DTI Ratio &le; ${policy.maxDTI}%</span>
-                <span>Calculated: ${app.dti}%</span>
-              </div>
-            </div>
-            
-            <div class="check-item ${app.ltvPass ? 'pass' : 'fail'}">
-              <div class="check-icon">${app.ltvPass ? '✓' : '✗'}</div>
-              <div class="check-details">
-                <span>LTV Ratio &le; ${policy.maxLTV}%</span>
-                <span>Calculated: ${app.ltv}%</span>
-              </div>
-            </div>
-            
-            <div class="check-item ${app.creditStatus === 'pass' ? 'pass' : (app.creditStatus === 'warning' ? 'neutral' : 'fail')}">
-              <div class="check-icon">${app.creditStatus === 'pass' ? '✓' : (app.creditStatus === 'warning' ? '!' : '✗')}</div>
-              <div class="check-details">
-                <span>Credit Score &ge; ${policy.minAutoApprove}</span>
-                <span>Score: ${app.creditScore}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
 
 // Chart.js Visualizations updating dynamically
 function updateCharts(list, init = false) {

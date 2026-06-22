@@ -46,101 +46,225 @@
 
   <!-- Tab 1: Underwriting Dashboard -->
   <div id="tab-sandbox" class="tab-content">
-    <div class="dashboard-container">
-      
-      <!-- Sidebar Controls -->
-      <aside>
-        <h2 class="aside-title">Policy Parameters</h2>
+    <div class="dashboard-container-full">
+      <main class="dashboard-main">
         
-        <div class="slider-group">
-          <!-- Max DTI Slider -->
-          <div class="slider-card">
-            <div class="slider-label">
-              <span>Max DTI Threshold</span>
-              <span id="maxDTI-val" class="value-display">45%</span>
+        <!-- Top Title & Quick Stats Banner -->
+        <section class="dss-header-row glass-panel">
+          <div class="dss-header-title">
+            <h2>Interactive Underwriting Sandbox</h2>
+            <p>Evaluate credit applications in real-time. Adjust DTI &amp; LTV rules and applicant parameters to trigger instant underwriting recommendations.</p>
+          </div>
+          
+          <div class="quick-stats-banner">
+            <div class="stat-banner-item">
+              <div class="stat-banner-lbl">Approved</div>
+              <div class="stat-banner-val text-approve" id="count-approve">0</div>
             </div>
-            <input type="range" id="maxDTI" min="10" max="80" step="5" value="45">
-            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.35rem;">Debt-to-Income cap</div>
-          </div>
-
-          <!-- Max LTV Slider -->
-          <div class="slider-card">
-            <div class="slider-label">
-              <span>Max LTV Threshold</span>
-              <span id="maxLTV-val" class="value-display">80%</span>
+            <div class="stat-banner-item">
+              <div class="stat-banner-lbl">In Review</div>
+              <div class="stat-banner-val text-review" id="count-review">0</div>
             </div>
-            <input type="range" id="maxLTV" min="20" max="110" step="5" value="80">
-            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.35rem;">Loan-to-Value collateral limit</div>
-          </div>
-
-          <!-- Auto-Approve Score Slider -->
-          <div class="slider-card">
-            <div class="slider-label">
-              <span>Auto-Approve Min Score</span>
-              <span id="minAutoApprove-val" class="value-display">700</span>
+            <div class="stat-banner-item">
+              <div class="stat-banner-lbl">Denied</div>
+              <div class="stat-banner-val text-deny" id="count-deny">0</div>
             </div>
-            <input type="range" id="minAutoApprove" min="600" max="850" step="10" value="700">
-            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.35rem;">FICO/CIBIL automatic pass mark</div>
-          </div>
-
-          <!-- Manual Review Score Slider -->
-          <div class="slider-card">
-            <div class="slider-label">
-              <span>Manual Review Min Score</span>
-              <span id="minManualReview-val" class="value-display">600</span>
-            </div>
-            <input type="range" id="minManualReview" min="400" max="690" step="10" value="600">
-            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.35rem;">Score threshold below which denied</div>
-          </div>
-        </div>
-
-        <h2 class="aside-title">Recalculated Metrics</h2>
-        <div class="quick-stats">
-          <div class="stat-item">
-            <div class="stat-info">
-              <span>Approved Loans</span>
-              <span id="count-approve">0</span>
-            </div>
-            <div class="stat-color-dot approve"></div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-info">
-              <span>Manual Review Needed</span>
-              <span id="count-review">0</span>
-            </div>
-            <div class="stat-color-dot review"></div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-info">
-              <span>Denied Loans</span>
-              <span id="count-deny">0</span>
-            </div>
-            <div class="stat-color-dot deny"></div>
-          </div>
-        </div>
-      </aside>
-
-      <!-- Main Workspace Content -->
-      <main>
-        
-        <!-- Top Introduction & Problem Statement Info -->
-        <section class="dataset-link-panel">
-          <div class="dataset-link-panel-text">
-            <strong style="color:#fff; font-size:0.9rem; display:block; margin-bottom:0.15rem;">DSS Underwriting Strategy Demo</strong>
-            This interactive sandbox evaluates applicants using real-time debt-to-income (DTI) and loan-to-value (LTV) ratios. Try adjusting the sliders in the sidebar to simulate custom credit risk policies!
-          </div>
-          <div class="dataset-link-panel-text" style="border-left:1px solid var(--border-light); padding-left:1rem;">
-            <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; display:block;">Reference Dataset</span>
-            <a href="https://www.kaggle.com/datasets/architvarshney/loan-approval-prediction-dataset" target="_blank" id="kaggle-link">
-              Kaggle Loan Approval Dataset &rarr;
-            </a>
           </div>
         </section>
 
-        <!-- Analytics Row -->
+        <!-- Top Interactive Controls Grid: Inputs, Policy, Decision -->
+        <section class="dss-control-grid">
+          
+          <!-- Card 1: Customer Data Profiles & Inputs -->
+          <div class="control-card glass-panel" id="customer-inputs-card">
+            <div class="card-header-icon">
+              <svg viewBox="0 0 24 24" class="header-icon"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/></svg>
+              <h3>Customer Data Profiles &amp; Inputs</h3>
+            </div>
+            <form id="dss-calculator-form" onsubmit="event.preventDefault();">
+              <div class="form-grid-three">
+                <!-- Applicant Name -->
+                <div class="form-group-full">
+                  <label for="calc-name">Applicant Name</label>
+                  <input type="text" id="calc-name" placeholder="Enter Full Name" required value="Alex Mercer">
+                </div>
+                
+                <!-- Monthly Income -->
+                <div class="form-group">
+                  <label for="calc-income">Monthly Income ($)</label>
+                  <input type="number" id="calc-income" min="1" placeholder="Monthly Income" required value="8500">
+                </div>
+                
+                <!-- Existing Debts -->
+                <div class="form-group">
+                  <label for="calc-debts">Existing Debts ($)</label>
+                  <input type="number" id="calc-debts" min="0" placeholder="Existing Debts" required value="2900">
+                </div>
+
+                <!-- Requested Loan Amount -->
+                <div class="form-group">
+                  <label for="calc-loan">Requested Loan Amount ($)</label>
+                  <input type="number" id="calc-loan" min="1" placeholder="Loan Amount" required value="180000">
+                </div>
+
+                <!-- Property Value -->
+                <div class="form-group">
+                  <label for="calc-property">Property Value ($)</label>
+                  <input type="number" id="calc-property" min="1" placeholder="Property Value" required value="260000">
+                </div>
+
+                <!-- Credit Score -->
+                <div class="form-group">
+                  <label for="calc-credit">Credit Score (300-850)</label>
+                  <input type="number" id="calc-credit" min="300" max="850" placeholder="Credit Score" required value="745">
+                </div>
+                
+                <!-- Secondary / Demographic Fields -->
+                <div class="form-group">
+                  <label for="calc-employed">Self Employed</label>
+                  <select id="calc-employed">
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                  </select>
+                </div>
+                
+                <!-- Education -->
+                <div class="form-group">
+                  <label for="calc-education">Education Status</label>
+                  <select id="calc-education">
+                    <option value="Graduate">Graduate</option>
+                    <option value="Not Graduate">Not Graduate</option>
+                  </select>
+                </div>
+
+                <!-- Gender -->
+                <div class="form-group">
+                  <label for="calc-gender">Gender</label>
+                  <select id="calc-gender">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Card 2: Adjust Underwriting Policy Thresholds -->
+          <div class="control-card glass-panel" id="policy-thresholds-card">
+            <div class="card-header-icon">
+              <svg viewBox="0 0 24 24" class="header-icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" fill="currentColor"/></svg>
+              <h3>Policy Thresholds</h3>
+            </div>
+            
+            <div class="sliders-container">
+              <!-- Max DTI Slider -->
+              <div class="slider-box">
+                <div class="slider-info">
+                  <span>Max DTI Threshold</span>
+                  <span id="maxDTI-val" class="slider-badge">45%</span>
+                </div>
+                <input type="range" id="maxDTI" min="10" max="80" step="5" value="45">
+                <p class="slider-helper">Debt-to-Income percentage limit</p>
+              </div>
+
+              <!-- Max LTV Slider -->
+              <div class="slider-box">
+                <div class="slider-info">
+                  <span>Max LTV Threshold</span>
+                  <span id="maxLTV-val" class="slider-badge">80%</span>
+                </div>
+                <input type="range" id="maxLTV" min="20" max="110" step="5" value="80">
+                <p class="slider-helper">Loan-to-Value collateral limit</p>
+              </div>
+
+              <!-- Auto-Approve Score Slider -->
+              <div class="slider-box">
+                <div class="slider-info">
+                  <span>Auto-Approve Min Score</span>
+                  <span id="minAutoApprove-val" class="slider-badge">700</span>
+                </div>
+                <input type="range" id="minAutoApprove" min="600" max="850" step="10" value="700">
+                <p class="slider-helper">FICO/CIBIL automatic pass mark</p>
+              </div>
+
+              <!-- Manual Review Score Slider -->
+              <div class="slider-box">
+                <div class="slider-info">
+                  <span>Manual Review Min Score</span>
+                  <span id="minManualReview-val" class="slider-badge">600</span>
+                </div>
+                <input type="range" id="minManualReview" min="400" max="690" step="10" value="600">
+                <p class="slider-helper">Score limit below which auto-denied</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Live Underwriting Decision -->
+          <div class="control-card glass-panel" id="live-decision-card">
+            <div class="card-header-icon">
+              <svg viewBox="0 0 24 24" class="header-icon"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/></svg>
+              <h3>Live Decision Support</h3>
+            </div>
+            
+            <div class="decision-content">
+              <div class="decision-header-status">
+                <div class="ratio-outputs">
+                  <div class="ratio-out-item">
+                    <span class="ratio-out-lbl">Calculated DTI</span>
+                    <span class="ratio-out-val" id="live-dti">34.1%</span>
+                  </div>
+                  <div class="ratio-out-item">
+                    <span class="ratio-out-lbl">Calculated LTV</span>
+                    <span class="ratio-out-val" id="live-ltv">69.2%</span>
+                  </div>
+                </div>
+                
+                <div class="decision-badge-container">
+                  <span class="decision-status-label">Recommendation</span>
+                  <div class="live-status-badge status-approve" id="live-status-recommendation">APPROVE</div>
+                </div>
+              </div>
+              
+              <div class="decision-narrative-box">
+                <span class="narrative-lbl">Decision Narrative</span>
+                <p class="narrative-text" id="live-decision-reason">Evaluating application variables...</p>
+              </div>
+              
+              <!-- Checklists styling for live decisions -->
+              <div class="live-checklist">
+                <div class="live-check-item" id="chk-dti">
+                  <span class="chk-icon">✓</span>
+                  <span class="chk-lbl">DTI Ratio &le; Max DTI</span>
+                </div>
+                <div class="live-check-item" id="chk-ltv">
+                  <span class="chk-icon">✓</span>
+                  <span class="chk-lbl">LTV Ratio &le; Max LTV</span>
+                </div>
+                <div class="live-check-item" id="chk-credit">
+                  <span class="chk-icon">✓</span>
+                  <span class="chk-lbl">Credit Score Check</span>
+                </div>
+              </div>
+              
+              <div class="decision-actions">
+                <button class="btn-primary" id="save-applicant-btn">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+                  Save / Update
+                </button>
+                <button class="btn-secondary" id="clear-applicant-btn">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+                  Clear / New
+                </button>
+              </div>
+            </div>
+          </div>
+          
+        </section>
+
+        <!-- Middle Section: Analytics Charts -->
         <section class="analytics-row">
           <!-- Scatter Chart (DTI vs LTV Map) -->
-          <div class="chart-card">
+          <div class="chart-card glass-panel">
             <div class="chart-header">
               <div>
                 <h3 class="chart-title">Risk Boundary Analysis</h3>
@@ -155,7 +279,7 @@
           <!-- Ratios & Averages -->
           <div class="ratios-grid">
             <!-- Avg DTI & LTV Box -->
-            <div class="ratio-box">
+            <div class="ratio-box glass-panel">
               <div class="ratio-box-header">
                 <div>
                   <span class="ratio-name">Average Ratios</span>
@@ -164,19 +288,18 @@
               </div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
                 <div>
-                  <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">DTI Ratio</span>
+                  <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:500;">DTI Ratio</span>
                   <div class="ratio-value" id="avg-dti">--</div>
                 </div>
                 <div style="text-align:right;">
-                  <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">LTV Ratio</span>
+                  <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:500;">LTV Ratio</span>
                   <div class="ratio-value" id="avg-ltv" style="color:var(--color-secondary);">--</div>
                 </div>
               </div>
-
             </div>
             
             <!-- Avg Score / Distribution Box -->
-            <div class="ratio-box" style="display:flex; flex-direction:row; padding:0.75rem;">
+            <div class="ratio-box glass-panel" style="display:flex; flex-direction:row; padding:0.75rem;">
               <div style="flex:1.2; display:flex; flex-direction:column; justify-content:space-between; padding-right:0.5rem;">
                 <div>
                   <span class="ratio-name">Credit Profile</span>
@@ -191,8 +314,8 @@
           </div>
         </section>
 
-        <!-- Control Toolbar -->
-        <section class="controls-row">
+        <!-- Bottom Section: Search Queue Controls -->
+        <section class="controls-row glass-panel">
           <div class="search-wrapper">
             <svg viewBox="0 0 24 24">
               <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
@@ -205,19 +328,11 @@
             <button class="filter-btn" data-filter="approve" id="filter-approve-btn">Approved</button>
             <button class="filter-btn" data-filter="review" id="filter-review-btn">In Review</button>
             <button class="filter-btn" data-filter="deny" id="filter-deny-btn">Denied</button>
-            
-            <button class="btn-primary" id="add-applicant-btn">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              Add Applicant
-            </button>
           </div>
         </section>
 
         <!-- Table Section -->
-        <section class="table-card">
+        <section class="table-card glass-panel">
           <div class="table-wrapper">
             <table>
               <thead>
@@ -237,11 +352,6 @@
               </tbody>
             </table>
           </div>
-        </section>
-
-        <!-- Report Card Detail View -->
-        <section id="detail-card-container" class="detail-layout">
-          <!-- Populated on click by JS -->
         </section>
 
       </main>
@@ -336,90 +446,6 @@
         </div>
       </div>
 
-    </div>
-  </div>
-
-  <!-- Add Applicant Modal Popup -->
-  <div class="modal-overlay" id="add-modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Enter Applicant Financial Profile</h2>
-        <button class="close-btn" id="close-modal">
-          <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
-          </svg>
-        </button>
-      </div>
-      
-      <form id="add-applicant-form">
-        <div class="form-grid">
-          <!-- Applicant Name -->
-          <div class="form-group full-width">
-            <label for="form-name">Full Name</label>
-            <input type="text" id="form-name" placeholder="e.g. John Doe" required>
-          </div>
-          
-          <!-- Monthly Income -->
-          <div class="form-group">
-            <label for="form-income">Monthly Income ($)</label>
-            <input type="number" id="form-income" min="500" max="1000000" placeholder="e.g. 8000" required>
-          </div>
-          
-          <!-- Monthly Debts -->
-          <div class="form-group">
-            <label for="form-debts">Monthly Debts ($)</label>
-            <input type="number" id="form-debts" min="0" max="1000000" placeholder="e.g. 2000" required>
-          </div>
-
-          <!-- Requested Loan Amount -->
-          <div class="form-group">
-            <label for="form-loan">Loan Amount Requested ($)</label>
-            <input type="number" id="form-loan" min="1000" max="10000000" placeholder="e.g. 150000" required>
-          </div>
-
-          <!-- Collateral Property Value -->
-          <div class="form-group">
-            <label for="form-property">Property Value ($)</label>
-            <input type="number" id="form-property" min="1000" max="10000000" placeholder="e.g. 250000" required>
-          </div>
-
-          <!-- Credit Score -->
-          <div class="form-group">
-            <label for="form-credit">Credit Score (300 - 850)</label>
-            <input type="number" id="form-credit" min="300" max="850" placeholder="e.g. 720" required>
-          </div>
-          
-          <!-- Demographic Features (representing Kaggle schema) -->
-          <div class="form-group">
-            <label for="form-gender">Gender</label>
-            <select id="form-gender">
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="form-education">Education Status</label>
-            <select id="form-education">
-              <option value="Graduate">Graduate</option>
-              <option value="Not Graduate">Not Graduate</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="form-employed">Self Employed</label>
-            <select id="form-employed">
-              <option value="No">No</option>
-              <option value="Yes">Yes</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="cancel-modal">Cancel</button>
-          <button type="submit" class="btn-primary">Compute &amp; Analyze</button>
-        </div>
-      </form>
     </div>
   </div>
 
