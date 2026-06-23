@@ -203,6 +203,19 @@ function updateLiveDecisionCard() {
       recBadge.classList.add("status-deny");
     }
   }
+
+  // Update dynamic glow on the live decision card
+  const decisionCard = document.getElementById("live-decision-card");
+  if (decisionCard) {
+    decisionCard.className = "control-card glass-panel"; // reset classes
+    if (evaluation.status === "Approve") {
+      decisionCard.classList.add("glow-approve");
+    } else if (evaluation.status === "Manual Review") {
+      decisionCard.classList.add("glow-review");
+    } else {
+      decisionCard.classList.add("glow-deny");
+    }
+  }
   
   // Update narrative explanation
   const reasonText = document.getElementById("live-decision-reason");
