@@ -1,7 +1,11 @@
 // app.js
 // Decision Support System (DSS) Core Engine
 
-let applicants = [...sampleApplicants];
+let applicants = JSON.parse(localStorage.getItem("dss_applicants")) || [];
+if (applicants.length === 0 && typeof sampleApplicants !== 'undefined') {
+  applicants = [...sampleApplicants];
+  localStorage.setItem("dss_applicants", JSON.stringify(applicants));
+}
 let selectedId = applicants[0]?.id || null;
 let currentFilter = "all";
 let searchQuery = "";
@@ -262,6 +266,11 @@ function updateLiveDecisionCard() {
   }
 }
 
+// Save the current state of applicants to LocalStorage
+function saveToLocalStorage() {
+  localStorage.setItem("dss_applicants", JSON.stringify(applicants));
+}
+
 // Setup live calculations and control actions for the DSS calculator
 function initDSSCalculator() {
   const formFields = [
@@ -312,6 +321,7 @@ function initDSSCalculator() {
         selectedId = newId;
       }
       
+      saveToLocalStorage();
       renderDashboard(false);
     });
   }
@@ -336,6 +346,44 @@ function initDSSCalculator() {
       rows.forEach(row => row.classList.remove("selected"));
       
       updateLiveDecisionCard();
+    });
+  }
+
+  // Delete button click
+  const deleteBtn = document.getElementById("delete-applicant-btn");
+  if (deleteBtn) {
+    deleteBtn.addEventListener("click", () => {
+      if (!selectedId) {
+        alert("Please select an applicant from the queue to delete.");
+        return;
+      }
+      
+      if (confirm(`Are you sure you want to delete this applicant profile?`)) {
+        const index = applicants.findIndex(a => a.id === selectedId);
+        if (index !== -1) {
+          applicants.splice(index, 1);
+          saveToLocalStorage();
+          
+          // Select the next available applicant
+          selectedId = applicants[0]?.id || null;
+          if (selectedId) {
+            loadApplicantIntoForm(applicants.find(a => a.id === selectedId));
+          } else {
+            // Clear inputs if queue is empty
+            document.getElementById("calc-name").value = "";
+            document.getElementById("calc-income").value = "";
+            document.getElementById("calc-debts").value = "";
+            document.getElementById("calc-loan").value = "";
+            document.getElementById("calc-property").value = "";
+            document.getElementById("calc-credit").value = "650";
+            document.getElementById("calc-employed").value = "No";
+            document.getElementById("calc-education").value = "Graduate";
+            document.getElementById("calc-gender").value = "Male";
+          }
+          
+          renderDashboard(false);
+        }
+      }
     });
   }
 }

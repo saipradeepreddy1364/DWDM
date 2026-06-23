@@ -46,34 +46,94 @@
 
   <!-- Tab 1: Underwriting Dashboard -->
   <div id="tab-sandbox" class="tab-content">
-    <div class="dashboard-container-full">
-      <main class="dashboard-main">
+    <div class="dss-layout-wrapper">
+      
+      <!-- Left Sidebar: Policy Parameters & Summary Stats -->
+      <aside class="dss-sidebar glass-panel">
         
-        <!-- Top Title & Quick Stats Banner -->
-        <section class="dss-header-row glass-panel">
-          <div class="dss-header-title">
-            <h2>Interactive Underwriting Sandbox</h2>
-            <p>Evaluate credit applications in real-time. Adjust DTI &amp; LTV rules and applicant parameters to trigger instant underwriting recommendations.</p>
+        <!-- Section 1: Policy Rules/Thresholds -->
+        <div class="sidebar-section">
+          <div class="card-header-icon">
+            <svg viewBox="0 0 24 24" class="header-icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" fill="currentColor"/></svg>
+            <h3>Policy Parameters</h3>
           </div>
           
-          <div class="quick-stats-banner">
-            <div class="stat-banner-item">
-              <div class="stat-banner-lbl">Approved</div>
-              <div class="stat-banner-val text-approve" id="count-approve">0</div>
+          <div class="sliders-container">
+            <!-- Max DTI Slider -->
+            <div class="slider-box">
+              <div class="slider-info">
+                <span>Max DTI Threshold</span>
+                <span id="maxDTI-val" class="slider-badge">45%</span>
+              </div>
+              <input type="range" id="maxDTI" min="10" max="80" step="5" value="45">
+              <p class="slider-helper">Debt-to-Income percentage limit</p>
             </div>
-            <div class="stat-banner-item">
-              <div class="stat-banner-lbl">In Review</div>
-              <div class="stat-banner-val text-review" id="count-review">0</div>
+
+            <!-- Max LTV Slider -->
+            <div class="slider-box">
+              <div class="slider-info">
+                <span>Max LTV Threshold</span>
+                <span id="maxLTV-val" class="slider-badge">80%</span>
+              </div>
+              <input type="range" id="maxLTV" min="20" max="110" step="5" value="80">
+              <p class="slider-helper">Loan-to-Value collateral limit</p>
             </div>
-            <div class="stat-banner-item">
-              <div class="stat-banner-lbl">Denied</div>
-              <div class="stat-banner-val text-deny" id="count-deny">0</div>
+
+            <!-- Auto-Approve Score Slider -->
+            <div class="slider-box">
+              <div class="slider-info">
+                <span>Auto-Approve Min Score</span>
+                <span id="minAutoApprove-val" class="slider-badge">700</span>
+              </div>
+              <input type="range" id="minAutoApprove" min="600" max="850" step="10" value="700">
+              <p class="slider-helper">FICO/CIBIL automatic pass mark</p>
+            </div>
+
+            <!-- Manual Review Score Slider -->
+            <div class="slider-box">
+              <div class="slider-info">
+                <span>Manual Review Min Score</span>
+                <span id="minManualReview-val" class="slider-badge">600</span>
+              </div>
+              <input type="range" id="minManualReview" min="400" max="690" step="10" value="600">
+              <p class="slider-helper">Score limit below which auto-denied</p>
             </div>
           </div>
-        </section>
-
-        <!-- Top Interactive Controls Grid: Inputs, Policy, Decision -->
-        <section class="dss-control-grid">
+        </div>
+        
+        <!-- Section 2: Portfolio Distribution Summary -->
+        <div class="sidebar-section border-top">
+          <div class="card-header-icon">
+            <svg viewBox="0 0 24 24" class="header-icon"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" fill="currentColor"/></svg>
+            <h3>Portfolio Summary</h3>
+          </div>
+          
+          <div class="sidebar-quick-stats">
+            <div class="stat-banner-item">
+              <span class="stat-banner-lbl">Approved</span>
+              <span class="stat-banner-val text-approve" id="count-approve">0</span>
+            </div>
+            <div class="stat-banner-item">
+              <span class="stat-banner-lbl">In Review</span>
+              <span class="stat-banner-val text-review" id="count-review">0</span>
+            </div>
+            <div class="stat-banner-item">
+              <span class="stat-banner-lbl">Denied</span>
+              <span class="stat-banner-val text-deny" id="count-deny">0</span>
+            </div>
+          </div>
+          
+          <div class="sidebar-chart-container">
+            <canvas id="distribution-chart"></canvas>
+          </div>
+        </div>
+      </aside>
+      
+      <!-- Right Main Workspace -->
+      <main class="dss-main-workspace">
+        
+        <!-- Top Section: Interactive Sandbox inputs & decision side-by-side -->
+        <section class="dss-sandbox-grid">
           
           <!-- Card 1: Customer Data Profiles & Inputs -->
           <div class="control-card glass-panel" id="customer-inputs-card">
@@ -82,7 +142,7 @@
               <h3>Customer Data Profiles &amp; Inputs</h3>
             </div>
             <form id="dss-calculator-form" onsubmit="event.preventDefault();">
-              <div class="form-grid-three">
+              <div class="form-grid-two">
                 <!-- Applicant Name -->
                 <div class="form-group-full">
                   <label for="calc-name">Applicant Name</label>
@@ -149,57 +209,7 @@
             </form>
           </div>
 
-          <!-- Card 2: Adjust Underwriting Policy Thresholds -->
-          <div class="control-card glass-panel" id="policy-thresholds-card">
-            <div class="card-header-icon">
-              <svg viewBox="0 0 24 24" class="header-icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" fill="currentColor"/></svg>
-              <h3>Policy Thresholds</h3>
-            </div>
-            
-            <div class="sliders-container">
-              <!-- Max DTI Slider -->
-              <div class="slider-box">
-                <div class="slider-info">
-                  <span>Max DTI Threshold</span>
-                  <span id="maxDTI-val" class="slider-badge">45%</span>
-                </div>
-                <input type="range" id="maxDTI" min="10" max="80" step="5" value="45">
-                <p class="slider-helper">Debt-to-Income percentage limit</p>
-              </div>
-
-              <!-- Max LTV Slider -->
-              <div class="slider-box">
-                <div class="slider-info">
-                  <span>Max LTV Threshold</span>
-                  <span id="maxLTV-val" class="slider-badge">80%</span>
-                </div>
-                <input type="range" id="maxLTV" min="20" max="110" step="5" value="80">
-                <p class="slider-helper">Loan-to-Value collateral limit</p>
-              </div>
-
-              <!-- Auto-Approve Score Slider -->
-              <div class="slider-box">
-                <div class="slider-info">
-                  <span>Auto-Approve Min Score</span>
-                  <span id="minAutoApprove-val" class="slider-badge">700</span>
-                </div>
-                <input type="range" id="minAutoApprove" min="600" max="850" step="10" value="700">
-                <p class="slider-helper">FICO/CIBIL automatic pass mark</p>
-              </div>
-
-              <!-- Manual Review Score Slider -->
-              <div class="slider-box">
-                <div class="slider-info">
-                  <span>Manual Review Min Score</span>
-                  <span id="minManualReview-val" class="slider-badge">600</span>
-                </div>
-                <input type="range" id="minManualReview" min="400" max="690" step="10" value="600">
-                <p class="slider-helper">Score limit below which auto-denied</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 3: Live Underwriting Decision -->
+          <!-- Card 2: Live Underwriting Decision Support -->
           <div class="control-card glass-panel" id="live-decision-card">
             <div class="card-header-icon">
               <svg viewBox="0 0 24 24" class="header-icon"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/></svg>
@@ -255,66 +265,47 @@
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
                   Clear / New
                 </button>
+                <button class="btn-danger" id="delete-applicant-btn">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                  Delete
+                </button>
               </div>
             </div>
           </div>
           
         </section>
 
-        <!-- Middle Section: Analytics Charts -->
-        <section class="analytics-row">
+        <!-- Middle Row: Analytics Charts (Scatter Chart) -->
+        <section class="analytics-row-single">
           <!-- Scatter Chart (DTI vs LTV Map) -->
-          <div class="chart-card glass-panel">
+          <div class="chart-card-full glass-panel">
             <div class="chart-header">
               <div>
                 <h3 class="chart-title">Risk Boundary Analysis</h3>
-                <p class="chart-subtitle">DTI% (X-Axis) vs LTV% (Y-Axis) scatter mapping</p>
+                <p class="chart-subtitle">Debt-to-Income % (X-Axis) vs Loan-to-Value % (Y-Axis) portfolio distribution mapping</p>
+              </div>
+              <div class="chart-legend-averages">
+                <div class="legend-average-item">
+                  <span class="average-lbl">Portfolio Avg DTI</span>
+                  <span class="average-val" id="avg-dti">--</span>
+                </div>
+                <div class="legend-average-item">
+                  <span class="average-lbl">Portfolio Avg LTV</span>
+                  <span class="average-val" id="avg-ltv" style="color: var(--color-secondary);">--</span>
+                </div>
+                <div class="legend-average-item">
+                  <span class="average-lbl">Avg Credit Score</span>
+                  <span class="average-val" id="avg-score" style="color: var(--color-primary);">--</span>
+                </div>
               </div>
             </div>
-            <div class="chart-container">
+            <div class="chart-container-full">
               <canvas id="scatter-chart"></canvas>
-            </div>
-          </div>
-
-          <!-- Ratios & Averages -->
-          <div class="ratios-grid">
-            <!-- Avg DTI & LTV Box -->
-            <div class="ratio-box glass-panel">
-              <div class="ratio-box-header">
-                <div>
-                  <span class="ratio-name">Average Ratios</span>
-                  <p class="ratio-desc">Across all candidates</p>
-                </div>
-              </div>
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
-                <div>
-                  <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:500;">DTI Ratio</span>
-                  <div class="ratio-value" id="avg-dti">--</div>
-                </div>
-                <div style="text-align:right;">
-                  <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:500;">LTV Ratio</span>
-                  <div class="ratio-value" id="avg-ltv" style="color:var(--color-secondary);">--</div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Avg Score / Distribution Box -->
-            <div class="ratio-box glass-panel" style="display:flex; flex-direction:row; padding:0.75rem;">
-              <div style="flex:1.2; display:flex; flex-direction:column; justify-content:space-between; padding-right:0.5rem;">
-                <div>
-                  <span class="ratio-name">Credit Profile</span>
-                  <p class="ratio-desc">Average applicant score</p>
-                </div>
-                <div class="ratio-value" id="avg-score" style="margin-bottom:0.25rem;">--</div>
-              </div>
-              <div style="flex:1; position:relative; height:100%;">
-                <canvas id="distribution-chart"></canvas>
-              </div>
             </div>
           </div>
         </section>
 
-        <!-- Bottom Section: Search Queue Controls -->
+        <!-- Bottom Row: Search Queue Controls -->
         <section class="controls-row glass-panel">
           <div class="search-wrapper">
             <svg viewBox="0 0 24 24">
