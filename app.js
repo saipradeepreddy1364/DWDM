@@ -2,10 +2,6 @@
 // Decision Support System (DSS) Core Engine
 
 let applicants = JSON.parse(localStorage.getItem("dss_applicants")) || [];
-if (applicants.length === 0 && typeof sampleApplicants !== 'undefined') {
-  applicants = [...sampleApplicants];
-  localStorage.setItem("dss_applicants", JSON.stringify(applicants));
-}
 let selectedId = applicants[0]?.id || null;
 let currentFilter = "all";
 let searchQuery = "";
@@ -158,13 +154,20 @@ function initSearchAndFilters() {
 
 // Get applicant form data from inputs
 function getFormData() {
+  const name = document.getElementById("calc-name").value;
+  const monthlyIncome = Math.max(0, parseFloat(document.getElementById("calc-income").value) || 0);
+  const existingDebts = Math.max(0, parseFloat(document.getElementById("calc-debts").value) || 0);
+  const loanAmount = Math.max(0, parseFloat(document.getElementById("calc-loan").value) || 0);
+  const propertyValue = Math.max(0, parseFloat(document.getElementById("calc-property").value) || 0);
+  const creditScore = Math.min(850, Math.max(300, parseInt(document.getElementById("calc-credit").value) || 300));
+  
   return {
-    name: document.getElementById("calc-name").value,
-    monthlyIncome: parseFloat(document.getElementById("calc-income").value) || 0,
-    existingDebts: parseFloat(document.getElementById("calc-debts").value) || 0,
-    loanAmount: parseFloat(document.getElementById("calc-loan").value) || 0,
-    propertyValue: parseFloat(document.getElementById("calc-property").value) || 0,
-    creditScore: parseInt(document.getElementById("calc-credit").value) || 300,
+    name,
+    monthlyIncome,
+    existingDebts,
+    loanAmount,
+    propertyValue,
+    creditScore,
     selfEmployed: document.getElementById("calc-employed").value,
     education: document.getElementById("calc-education").value,
     gender: document.getElementById("calc-gender").value
@@ -425,9 +428,9 @@ function calculateStats(list) {
   
   list.forEach(app => {
     counts[app.status]++;
-    totalDTI += app.dti;
-    totalLTV += app.ltv;
-    totalScore += app.creditScore;
+    totalDTI += parseFloat(app.dti) || 0;
+    totalLTV += parseFloat(app.ltv) || 0;
+    totalScore += parseInt(app.creditScore) || 0;
   });
   
   const total = list.length || 1;
