@@ -122,6 +122,7 @@ header {
   letter-spacing: -0.5px;
   background: linear-gradient(to right, #ffffff, #c7d2fe, #a5f3fc);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -236,6 +237,7 @@ aside {
 
 input[type="range"] {
   -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   height: 6px;
   background: #1f2937;
