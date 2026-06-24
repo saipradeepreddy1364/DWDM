@@ -7,12 +7,16 @@ let currentFilter = "all";
 let searchQuery = "";
 
 // Policy Threshold State (init from sliders)
-let policy = {
+let policy = JSON.parse(localStorage.getItem("dss_policy")) || {
   maxDTI: 45,
   maxLTV: 80,
   minAutoApprove: 700,
   minManualReview: 600
 };
+
+function savePolicyToLocalStorage() {
+  localStorage.setItem("dss_policy", JSON.stringify(policy));
+}
 
 // Chart instances
 let scatterChartInstance = null;
@@ -84,6 +88,7 @@ function initSliders() {
         
         policy[id] = value;
         valueDisplay.textContent = id.includes("DTI") || id.includes("LTV") ? `${value}%` : value;
+        savePolicyToLocalStorage();
         renderDashboard(false); // update charts and live status instantly
       });
     }
