@@ -167,10 +167,7 @@ function getFormData() {
     existingDebts,
     loanAmount,
     propertyValue,
-    creditScore,
-    selfEmployed: document.getElementById("calc-employed").value,
-    education: document.getElementById("calc-education").value,
-    gender: document.getElementById("calc-gender").value
+    creditScore
   };
 }
 
@@ -183,9 +180,6 @@ function loadApplicantIntoForm(app) {
   document.getElementById("calc-loan").value = app.loanAmount || "";
   document.getElementById("calc-property").value = app.propertyValue || "";
   document.getElementById("calc-credit").value = app.creditScore || "650";
-  document.getElementById("calc-employed").value = app.selfEmployed || "No";
-  document.getElementById("calc-education").value = app.education || "Graduate";
-  document.getElementById("calc-gender").value = app.gender || "Male";
 }
 
 // Update Live Underwriting Decision Card
@@ -278,8 +272,7 @@ function saveToLocalStorage() {
 function initDSSCalculator() {
   const formFields = [
     "calc-name", "calc-income", "calc-debts", 
-    "calc-loan", "calc-property", "calc-credit",
-    "calc-employed", "calc-education", "calc-gender"
+    "calc-loan", "calc-property", "calc-credit"
   ];
   
   formFields.forEach(id => {
@@ -340,9 +333,6 @@ function initDSSCalculator() {
       document.getElementById("calc-loan").value = "";
       document.getElementById("calc-property").value = "";
       document.getElementById("calc-credit").value = "650";
-      document.getElementById("calc-employed").value = "No";
-      document.getElementById("calc-education").value = "Graduate";
-      document.getElementById("calc-gender").value = "Male";
       
       // Remove selected formatting in queue table
       const rows = document.querySelectorAll(".table-row");
@@ -379,9 +369,6 @@ function initDSSCalculator() {
             document.getElementById("calc-loan").value = "";
             document.getElementById("calc-property").value = "";
             document.getElementById("calc-credit").value = "650";
-            document.getElementById("calc-employed").value = "No";
-            document.getElementById("calc-education").value = "Graduate";
-            document.getElementById("calc-gender").value = "Male";
           }
           
           renderDashboard(false);
