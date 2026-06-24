@@ -678,11 +678,9 @@ function initFeatureImportanceChart() {
     'Annual Income',
     'Assets to Loan Ratio',
     'Loan-to-Value (LTV) Ratio',
-    'Loan Tenure (Term)',
-    'Education Level',
-    'Self Employment Status'
+    'Loan Tenure (Term)'
   ];
-  const importances = [89.18, 2.72, 2.52, 2.20, 2.11, 0.81, 0.26, 0.20];
+  const importances = [89.18, 2.72, 2.52, 2.20, 2.11, 0.81];
   
   if (featureImportanceChartInstance) {
     featureImportanceChartInstance.destroy();
