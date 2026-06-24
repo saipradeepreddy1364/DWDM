@@ -20,10 +20,25 @@ let distributionChartInstance = null;
 let featureImportanceChartInstance = null;
 
 // Initialize on page load
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   initSliders();
   initSearchAndFilters();
   initDSSCalculator();
+  
+  // Seed applicants from processed_applicants.json if localStorage is empty
+  if (applicants.length === 0) {
+    try {
+      const response = await fetch("processed_applicants.json");
+      if (response.ok) {
+        const defaultApplicants = await response.json();
+        // Load the first 20 applicants as seed data
+        applicants = defaultApplicants.slice(0, 20);
+        saveToLocalStorage();
+      }
+    } catch (e) {
+      console.error("Failed to seed applicants from JSON:", e);
+    }
+  }
   
   // Pre-load the first applicant into the form
   if (applicants.length > 0) {
@@ -573,7 +588,7 @@ function updateCharts(list, init = false) {
       // Direct update of data
       scatterChartInstance.data.datasets[0].data = scatterData;
       scatterChartInstance.data.datasets[0].pointBackgroundColor = scatterData.map(d => colors[d.status]);
-      scatterChartInstance.update('none'); // silent update
+      scatterChartInstance.update();
     }
   }
   
@@ -612,7 +627,7 @@ function updateCharts(list, init = false) {
       });
     } else {
       distributionChartInstance.data.datasets[0].data = distData;
-      distributionChartInstance.update('none');
+      distributionChartInstance.update();
     }
   }
 }
