@@ -184,7 +184,7 @@ function getFormData() {
   const monthlyIncome = Math.max(0, parseFloat(document.getElementById("calc-income").value) || 0);
   const existingDebts = Math.max(0, parseFloat(document.getElementById("calc-debts").value) || 0);
   const loanAmount = Math.max(0, parseFloat(document.getElementById("calc-loan").value) || 0);
-  const propertyValue = Math.max(0, parseFloat(document.getElementById("calc-property").value) || 0);
+  const propertyValue = Math.max(1, parseFloat(document.getElementById("calc-property").value) || 0);
   const creditScore = Math.min(850, Math.max(300, parseInt(document.getElementById("calc-credit").value) || 300));
   
   return {
@@ -319,6 +319,12 @@ function initDSSCalculator() {
         return;
       }
       
+      const propertyVal = parseFloat(document.getElementById("calc-property").value) || 0;
+      if (propertyVal <= 0) {
+        alert("Property Value must be greater than 0 to calculate LTV.");
+        return;
+      }
+      
       const currentData = getFormData();
       
       if (selectedId) {
@@ -399,6 +405,25 @@ function initDSSCalculator() {
           
           renderDashboard(false);
         }
+      }
+    });
+  }
+  
+  // Enforce non-zero property values and dynamically adjust loan amount
+  const propertyInput = document.getElementById("calc-property");
+  if (propertyInput) {
+    propertyInput.addEventListener("change", (e) => {
+      let val = parseFloat(e.target.value) || 0;
+      if (val <= 0) {
+        val = 10000; // Reset to standard minimum of $10,000
+        e.target.value = val;
+      }
+      
+      const loanInput = document.getElementById("calc-loan");
+      if (loanInput) {
+        // Automatically set loan amount to match the maximum allowed by the policy LTV
+        loanInput.value = Math.round(val * (policy.maxLTV / 100));
+        updateLiveDecisionCard();
       }
     });
   }
