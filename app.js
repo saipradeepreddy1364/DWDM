@@ -86,8 +86,11 @@ function evaluateApplicant(app) {
   const dti = income > 0 ? parseFloat(((debts / income) * 100).toFixed(1)) : 0;
   const ltv = property > 0 ? parseFloat(((loan / property) * 100).toFixed(1)) : 0;
   
+  const dtiDisp = `${dti}%`;
+  const ltvDisp = property > 0 ? `${ltv}%` : "∞%";
+  
   const dtiPass = dti <= policy.maxDTI;
-  const ltvPass = ltv <= policy.maxLTV;
+  const ltvPass = property > 0 && ltv <= policy.maxLTV;
   
   let creditStatus = "neutral";
   if (score >= policy.minAutoApprove) {
@@ -106,15 +109,21 @@ function evaluateApplicant(app) {
     reason = `Credit Score of ${score} is below the policy minimum of ${policy.minManualReview}.`;
   } else if (!dtiPass && !ltvPass) {
     status = "Deny";
-    reason = `Critical risk: Both Debt-to-Income (${dti}%) and Loan-to-Value (${ltv}%) ratios exceed max thresholds.`;
+    reason = `Critical risk: Both Debt-to-Income (${dtiDisp}) and Loan-to-Value (${ltvDisp}) ratios exceed max thresholds.`;
   } else if (dtiPass && ltvPass && creditStatus === "pass") {
     status = "Approve";
     reason = "All underwriting checks passed successfully: high credit score, low DTI, and solid property collateral.";
   } else {
     status = "Manual Review";
     const triggers = [];
-    if (!dtiPass) triggers.push(`DTI (${dti}%) exceeds max ${policy.maxDTI}%`);
-    if (!ltvPass) triggers.push(`LTV (${ltv}%) exceeds max ${policy.maxLTV}%`);
+    if (!dtiPass) triggers.push(`DTI (${dtiDisp}) exceeds max ${policy.maxDTI}%`);
+    if (!ltvPass) {
+      if (property <= 0) {
+        triggers.push(`Invalid property collateral value ($${property})`);
+      } else {
+        triggers.push(`LTV (${ltvDisp}) exceeds max ${policy.maxLTV}%`);
+      }
+    }
     if (creditStatus === "warning") triggers.push(`Credit Score (${score}) is in review range (${policy.minManualReview}-${policy.minAutoApprove})`);
     reason = `Triggered for manual review due to: ${triggers.join("; ")}.`;
   }
@@ -123,6 +132,8 @@ function evaluateApplicant(app) {
     ...app,
     dti,
     ltv,
+    dtiDisp,
+    ltvDisp,
     dtiPass,
     ltvPass,
     creditStatus,
@@ -188,8 +199,8 @@ function updateLiveDecisionCard() {
   const evaluation = evaluateApplicant(currentApp);
   
   // Update calculated outputs
-  document.getElementById("live-dti").textContent = `${evaluation.dti}%`;
-  document.getElementById("live-ltv").textContent = `${evaluation.ltv}%`;
+  document.getElementById("live-dti").textContent = evaluation.dtiDisp;
+  document.getElementById("live-ltv").textContent = evaluation.ltvDisp;
   
   // Update status badge
   const recBadge = document.getElementById("live-status-recommendation");
@@ -460,8 +471,8 @@ function renderTable(list) {
         <td class="num-cell">$${app.monthlyIncome.toLocaleString()}</td>
         <td class="num-cell">$${app.loanAmount.toLocaleString()}</td>
         <td class="num-cell">${app.creditScore}</td>
-        <td class="num-cell">${app.dti}%</td>
-        <td class="num-cell">${app.ltv}%</td>
+        <td class="num-cell">${app.dtiDisp}</td>
+        <td class="num-cell">${app.ltvDisp}</td>
         <td><span class="status-badge ${statusClass}">${app.status}</span></td>
       </tr>
     `;
