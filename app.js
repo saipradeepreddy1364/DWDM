@@ -186,7 +186,9 @@ function initSearchAndFilters() {
 // Get applicant form data from inputs
 function getFormData() {
   const name = document.getElementById("calc-name").value;
-  const monthlyIncome = Math.max(0, parseFloat(document.getElementById("calc-income").value) || 0);
+  // Input calc-income is Annual Income, so monthlyIncome is Annual Income / 12
+  const monthlyIncome = Math.max(0, parseFloat(document.getElementById("calc-income").value) || 0) / 12;
+  // Input calc-debts is Monthly Debts, which is already monthly
   const existingDebts = Math.max(0, parseFloat(document.getElementById("calc-debts").value) || 0);
   const loanAmount = Math.max(0, parseFloat(document.getElementById("calc-loan").value) || 0);
   const propertyValue = Math.max(1, parseFloat(document.getElementById("calc-property").value) || 0);
@@ -206,8 +208,10 @@ function getFormData() {
 function loadApplicantIntoForm(app) {
   if (!app) return;
   document.getElementById("calc-name").value = app.name || "";
-  document.getElementById("calc-income").value = app.monthlyIncome || "";
-  document.getElementById("calc-debts").value = app.existingDebts || "";
+  // Populate calc-income with Annual Income (monthlyIncome * 12)
+  document.getElementById("calc-income").value = app.monthlyIncome ? Math.round(app.monthlyIncome * 12) : "";
+  // Populate calc-debts with Monthly Debts (existingDebts)
+  document.getElementById("calc-debts").value = app.existingDebts ? Math.round(app.existingDebts) : "";
   document.getElementById("calc-loan").value = app.loanAmount || "";
   document.getElementById("calc-property").value = app.propertyValue || "";
   document.getElementById("calc-credit").value = app.creditScore || "650";
@@ -513,7 +517,7 @@ function renderTable(list) {
       <tr class="table-row ${isSelected ? 'selected' : ''}" onclick="selectApplicant('${app.id}')">
         <td style="font-weight:600; color:#fff;">${app.id}</td>
         <td>${app.name}</td>
-        <td class="num-cell">$${app.monthlyIncome.toLocaleString()}</td>
+        <td class="num-cell">$${Math.round(app.monthlyIncome * 12).toLocaleString()}</td>
         <td class="num-cell">$${app.loanAmount.toLocaleString()}</td>
         <td class="num-cell">${app.creditScore}</td>
         <td class="num-cell">${app.dtiDisp}</td>
