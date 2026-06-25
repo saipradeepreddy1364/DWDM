@@ -296,6 +296,12 @@ function updateLiveDecisionCard() {
       chkCredit.querySelector(".chk-icon").textContent = "✗";
     }
   }
+  
+  // Live sync of the draft applicant position on the scatter plot in real-time as they type
+  if (typeof Chart !== 'undefined' && scatterChartInstance) {
+    const evaluatedList = applicants.map(app => evaluateApplicant(app));
+    updateCharts(evaluatedList, false);
+  }
 }
 
 // Save the current state of applicants to LocalStorage
@@ -559,7 +565,8 @@ function updateCharts(list, init = false) {
   const colors = {
     "Approve": "#10b981",
     "Manual Review": "#f59e0b",
-    "Deny": "#ef4444"
+    "Deny": "#ef4444",
+    "Live Input": "#06b6d4"
   };
   
   const scatterData = list.map(app => ({
@@ -569,6 +576,16 @@ function updateCharts(list, init = false) {
     status: app.status
   }));
   
+  // Get current form data for the live draft point
+  const currentApp = getFormData();
+  const liveEval = evaluateApplicant(currentApp);
+  const livePoint = {
+    x: liveEval.dti,
+    y: liveEval.ltv,
+    label: liveEval.name || "Draft Applicant",
+    status: "Live Input"
+  };
+  
   // 1. Render/Update Scatter Chart
   const ctxScatter = document.getElementById("scatter-chart");
   if (ctxScatter) {
@@ -577,14 +594,25 @@ function updateCharts(list, init = false) {
       scatterChartInstance = new Chart(ctxScatter, {
         type: 'scatter',
         data: {
-          datasets: [{
-            label: 'Applicants',
-            data: scatterData,
-            pointBackgroundColor: scatterData.map(d => colors[d.status]),
-            pointBorderColor: 'rgba(255, 255, 255, 0.1)',
-            pointRadius: 6,
-            pointHoverRadius: 8
-          }]
+          datasets: [
+            {
+              label: 'Saved Portfolio',
+              data: scatterData,
+              pointBackgroundColor: scatterData.map(d => colors[d.status] || '#9ca3af'),
+              pointBorderColor: 'rgba(255, 255, 255, 0.1)',
+              pointRadius: 6,
+              pointHoverRadius: 8
+            },
+            {
+              label: 'Live Input',
+              data: [livePoint],
+              pointBackgroundColor: '#06b6d4',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2,
+              pointRadius: 10,
+              pointHoverRadius: 12
+            }
+          ]
         },
         options: {
           responsive: true,
@@ -621,7 +649,13 @@ function updateCharts(list, init = false) {
     } else {
       // Direct update of data
       scatterChartInstance.data.datasets[0].data = scatterData;
-      scatterChartInstance.data.datasets[0].pointBackgroundColor = scatterData.map(d => colors[d.status]);
+      scatterChartInstance.data.datasets[0].pointBackgroundColor = scatterData.map(d => colors[d.status] || '#9ca3af');
+      
+      // Direct update of live draft point
+      if (scatterChartInstance.data.datasets[1]) {
+        scatterChartInstance.data.datasets[1].data = [livePoint];
+      }
+      
       scatterChartInstance.update();
     }
   }
