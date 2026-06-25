@@ -29,22 +29,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   initSearchAndFilters();
   initDSSCalculator();
   
-  // Seed applicants from processed_applicants.json if localStorage is empty
-  if (applicants.length === 0) {
-    try {
-      const response = await fetch("processed_applicants.json");
-      if (response.ok) {
-        const defaultApplicants = await response.json();
-        // Load the first 20 applicants as seed data
-        applicants = defaultApplicants.slice(0, 20);
-        saveToLocalStorage();
-      }
-    } catch (e) {
-      console.error("Failed to seed applicants from JSON:", e);
-    }
+  // Filter out any default seeded applicants (names starting with "Applicant ")
+  // to ensure only user-created applicants from local storage are displayed
+  const customApplicants = applicants.filter(app => !app.name || !app.name.startsWith("Applicant "));
+  if (customApplicants.length !== applicants.length) {
+    applicants = customApplicants;
+    saveToLocalStorage();
   }
   
-  // Pre-load the first applicant into the form
+  // Pre-load the first applicant into the form if any exist
   if (applicants.length > 0) {
     selectedId = applicants[0].id;
     loadApplicantIntoForm(applicants[0]);
