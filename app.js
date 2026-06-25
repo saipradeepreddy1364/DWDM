@@ -188,8 +188,8 @@ function getFormData() {
   const name = document.getElementById("calc-name").value;
   // Input calc-income is Annual Income, so monthlyIncome is Annual Income / 12
   const monthlyIncome = Math.max(0, parseFloat(document.getElementById("calc-income").value) || 0) / 12;
-  // Input calc-debts is Monthly Debts, which is already monthly
-  const existingDebts = Math.max(0, parseFloat(document.getElementById("calc-debts").value) || 0);
+  // Input calc-debts is Total Debts, so existingDebts is Total Debts / 12
+  const existingDebts = Math.max(0, parseFloat(document.getElementById("calc-debts").value) || 0) / 12;
   const loanAmount = Math.max(0, parseFloat(document.getElementById("calc-loan").value) || 0);
   const propertyValue = Math.max(1, parseFloat(document.getElementById("calc-property").value) || 0);
   const creditScore = Math.min(850, Math.max(300, parseInt(document.getElementById("calc-credit").value) || 300));
@@ -210,8 +210,8 @@ function loadApplicantIntoForm(app) {
   document.getElementById("calc-name").value = app.name || "";
   // Populate calc-income with Annual Income (monthlyIncome * 12)
   document.getElementById("calc-income").value = app.monthlyIncome ? Math.round(app.monthlyIncome * 12) : "";
-  // Populate calc-debts with Monthly Debts (existingDebts)
-  document.getElementById("calc-debts").value = app.existingDebts ? Math.round(app.existingDebts) : "";
+  // Populate calc-debts with Total Debts (existingDebts * 12)
+  document.getElementById("calc-debts").value = app.existingDebts ? Math.round(app.existingDebts * 12) : "";
   document.getElementById("calc-loan").value = app.loanAmount || "";
   document.getElementById("calc-property").value = app.propertyValue || "";
   document.getElementById("calc-credit").value = app.creditScore || "650";
